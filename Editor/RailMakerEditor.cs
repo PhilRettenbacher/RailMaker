@@ -21,6 +21,8 @@ public class RailMakerEditor : Editor
     SerializedProperty frontPostRadius;
     SerializedProperty hasBackPost;
     SerializedProperty backPostRadius;
+    SerializedProperty uvTiling;
+    SerializedProperty enableAutoRegenerate;
 
     private void OnEnable()
     {
@@ -35,12 +37,14 @@ public class RailMakerEditor : Editor
         frontPostRadius = serializedObject.FindProperty("frontPostRadius");
         hasBackPost = serializedObject.FindProperty("hasBackPost");
         backPostRadius = serializedObject.FindProperty("backPostRadius");
+        uvTiling = serializedObject.FindProperty("uvTiling");
+        enableAutoRegenerate = serializedObject.FindProperty("enableAutoRegenerate");
 
-        Undo.undoRedoPerformed += Regenerate;
+        Undo.undoRedoPerformed += UndoRegenerateCallback;
     }
     private void OnDisable()
     {
-        Undo.undoRedoPerformed -= Regenerate;
+        Undo.undoRedoPerformed -= UndoRegenerateCallback;
     }
     private void OnSceneGUI()
     {
@@ -251,6 +255,9 @@ public class RailMakerEditor : Editor
                 if (rm.hasBackPost)
                     EditorGUILayout.PropertyField(backPostRadius);
 
+                EditorGUILayout.Space();
+                EditorGUILayout.PropertyField(uvTiling);
+
                 if (serializedObject.ApplyModifiedProperties())
                 {
                     Regenerate();
@@ -260,9 +267,18 @@ public class RailMakerEditor : Editor
 
         GUILayout.Space(20);
 
-        if (GUILayout.Button("Regenerate"))
+        serializedObject.Update();
+
+        EditorGUILayout.PropertyField(enableAutoRegenerate);
+
+        if (serializedObject.ApplyModifiedProperties())
         {
             Regenerate();
+        }
+
+        if (GUILayout.Button("Regenerate"))
+        {
+            Regenerate(true);
         }
     }
 
@@ -275,7 +291,6 @@ public class RailMakerEditor : Editor
         GameObject go = new GameObject("new_Rail");
         go.transform.position = spawnPos;
 
-        go.AddComponent<RailDefinition>();
         var rm = go.AddComponent<RailMaker>();
 
         rm.Reset();
@@ -286,17 +301,20 @@ public class RailMakerEditor : Editor
 
     }
 
-    public void Regenerate()
+    public void UndoRegenerateCallback()
+    {
+        Regenerate();
+    }
+
+    public void Regenerate(bool forceRegenerate = false)
     {
         RailMaker rm = target as RailMaker;
 
         if (!rm)
             return;
 
-        if(!rm.gameObject.GetComponent<RailDefinition>())
-        {
-            Undo.AddComponent<RailDefinition>(rm.gameObject);
-        }
+        if (!forceRegenerate && !rm.enableAutoRegenerate)
+            return;
 
         if (rm.points.Count < 2)
         {
@@ -349,12 +367,17 @@ public class RailMakerEditor : Editor
         var points = GetGenPoints(rm, true);
 
         List<Vector3> vertices = new List<Vector3>(rm.shape.vertices.Count * points.Count);
+        List<Vector2> uvs = new List<Vector2>();
+
         List<Vector3> capVerts = new List<Vector3>();
         List<Vector3> capNorms = new List<Vector3>();
+        List<Vector2> capUvs = new List<Vector2>();
 
         List<Vector3> normals = new List<Vector3>();
 
         int newPointCount = 0;
+
+        float currDistance = 0;
 
         for (int i = 0; i < points.Count; i++)
         {
@@ -418,16 +441,21 @@ public class RailMakerEditor : Editor
 
                     vertices.Add(newVert);
                     normals.Add(newNormal.normalized);
+                    uvs.Add(new Vector2(rm.shape.us[j], currDistance / rm.uvTiling));
 
                     if (addCap)
                     {
                         bool inFront = i == 0;
                         capVerts.Add(newVert);
                         capNorms.Add(localRailDirection * (inFront ? Vector3.back : Vector3.forward));
+                        capUvs.Add(new Vector2(rm.shape.us[j], currDistance / rm.uvTiling));
                     }
                 }
                 newPointCount++;
             }
+
+            if (i != points.Count - 1)
+                currDistance += Vector3.Distance(points[i].pos, points[i + 1].pos);
         }
 
         int[] tris = new int[(newPointCount - 1) * rm.shape.lines.Count * 3 + rm.shape.capTris.Count * 2];
@@ -477,10 +505,12 @@ public class RailMakerEditor : Editor
 
         vertices.AddRange(capVerts);
         normals.AddRange(capNorms);
+        uvs.AddRange(capUvs);
 
         mesh.SetVertices(vertices);
         mesh.SetNormals(normals);
         mesh.triangles = tris;
+        mesh.SetUVs(0, uvs);
 
         //mesh.RecalculateNormals();
 

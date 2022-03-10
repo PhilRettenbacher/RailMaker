@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 [SelectionBase]
-public class RailMaker : MonoBehaviour
+public class RailMaker : RailDefinition
 {
     //RailSegments Data
     //RailSegment: Type (flat, round, spline)
@@ -14,10 +14,15 @@ public class RailMaker : MonoBehaviour
     [Range(0.02f, 2f)]
     public float railRadius = .15f;
 
-    [Range(0.1f, 5f)]
+    [Range(0.2f, 5f)]
     public float maxArcLengthPerSegment = 0.5f;
 
     public float extraColliderLength = 0f;
+
+    [Min(0.1f), ]
+    public float uvTiling = 1f;
+
+    public bool enableAutoRegenerate = false;
 
     public RailShape shape;
 
@@ -59,6 +64,8 @@ public class RailMaker : MonoBehaviour
         frontPostRadius = 0;
         hasBackPost = true;
         backPostRadius = 0;
+
+        uvTiling = 1;
 
         shape = RailShape.GenerateCircle(12);
 

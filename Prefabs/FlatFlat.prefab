@@ -218,6 +218,8 @@ MonoBehaviour:
   railRadius: 0.1
   maxArcLengthPerSegment: 5
   extraColliderLength: 0
+  uvTiling: 1
+  enableAutoRegenerate: 0
   shape:
     vertices:
     - {x: -1, y: 1}
@@ -237,6 +239,15 @@ MonoBehaviour:
     - {x: 0, y: -1}
     - {x: -1, y: 0}
     - {x: -1, y: 0}
+    us:
+    - 0.375
+    - 0.625
+    - 0.625
+    - 0.875
+    - 0.875
+    - 0.125
+    - 0.125
+    - 0.375
     lines: 0000000001000000020000000300000004000000050000000600000007000000
     capTris: 000000000100000003000000050000000000000003000000
   railMaterial: {fileID: 2100000, guid: 88cdfedb36329a54db02906fd6ba7d08, type: 2}

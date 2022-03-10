@@ -8,6 +8,7 @@ public class RailShape
 {
     public List<Vector2> vertices;
     public List<Vector2> normals;
+    public List<float> us;
     public List<int> lines;
     public List<int> capTris;
 
@@ -23,6 +24,7 @@ public class RailShape
         List<Vector2> normals = new List<Vector2>();
         List<int> lines = new List<int>();
         List<int> capTris = new List<int>();
+        List<float> us = new List<float>();
 
         for(int i = 0; i<subdivisions; i++)
         {
@@ -31,6 +33,7 @@ public class RailShape
             Vector2 pos = new Vector2(x, y);
             vertices.Add(pos);
             normals.Add(pos);
+            us.Add((Mathf.InverseLerp(0, subdivisions - 1, i) + 0.5f) % 1);
 
             lines.Add(i);
             lines.Add((i + 1) % subdivisions);
@@ -48,6 +51,7 @@ public class RailShape
         shape.normals = normals;
         shape.lines = lines;
         shape.capTris = capTris;
+        shape.us = us;
 
         return shape;
     }
@@ -57,6 +61,7 @@ public class RailShape
         List<Vector2> normals = new List<Vector2>();
         List<int> lines = new List<int>();
         List<int> capTris = new List<int>();
+        List<float> us = new List<float>();
 
         Vector2 vec1 = new Vector2(-1, 1);
         Vector2 vec2 = new Vector2(1, 1);
@@ -64,16 +69,24 @@ public class RailShape
         Vector2 vec4 = new Vector2(-1, -1);
 
         vertices.Add(vec1);
+        us.Add(0.125f * 3);
         vertices.Add(vec2);
+        us.Add(0.125f * 5);
 
         vertices.Add(vec2);
+        us.Add(0.125f * 5);
         vertices.Add(vec3);
+        us.Add(0.125f * 7);
 
         vertices.Add(vec3);
+        us.Add(0.125f * 7);
         vertices.Add(vec4);
+        us.Add(0.125f * 1);
 
         vertices.Add(vec4);
+        us.Add(0.125f * 1);
         vertices.Add(vec1);
+        us.Add(0.125f * 3);
 
         normals.Add(Vector2.up);
         normals.Add(Vector2.up);
@@ -102,6 +115,7 @@ public class RailShape
         shape.normals = normals;
         shape.lines = lines;
         shape.capTris = capTris;
+        shape.us = us;
 
         return shape;
     }
